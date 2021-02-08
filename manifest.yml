@@ -1,0 +1,7 @@
+applications:
+- name: loggoNozzle
+  memory: 3G
+  instances: 1
+  buildpack: java_buildpack_offline
+  random-route: true
+  path: target/loggo-0.0.1-SNAPSHOT.jar

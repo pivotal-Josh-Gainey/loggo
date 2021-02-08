@@ -1,0 +1,107 @@
+
+syntax = "proto3";
+
+package loggregator.v2;
+
+import "envelope.proto";
+
+option java_multiple_files = true;
+option java_package = "com.jgainey.loggo.generated";
+option java_outer_classname = "EgressProto";
+option objc_class_prefix = "EGP";
+
+service Egress {
+  rpc Receiver(EgressRequest) returns (stream Envelope) {}
+  rpc BatchedReceiver(EgressBatchRequest) returns (stream EnvelopeBatch) {}
+}
+
+message EgressRequest {
+  // shard_id instructs Loggregator to shard envelopes between other
+  // subscriptions with the same shard_id. Loggregator will do its best to
+  // split the load evenly between subscriptions with the same shard_id
+  // (unless deterministic_name is set).
+  string shard_id = 1;
+
+  // deterministic_name is used to enable deterministic routing. This implies
+  // that gauges and counters are routed based on name. If this is excluded,
+  // then they are routed to split load evenly.
+  string deterministic_name = 5;
+
+  // TODO: This can be removed once selector has been around long enough.
+  Selector legacy_selector = 2;
+
+  // selector is the preferred (over legacy_selector) mechanism to select
+  // what envelope types the subscription wants. If there are no selectors
+  // given, no data will be sent.
+  repeated Selector selectors = 4;
+
+  // TODO: This can be removed once the envelope.deprecated_tags is removed.
+  bool use_preferred_tags = 3;
+}
+
+message EgressBatchRequest {
+  // shard_id instructs Loggregator to shard envelopes between other
+  // subscriptions with the same shard_id. Loggregator will do its best to
+  // split the load evenly between subscriptions with the same shard_id
+  // (unless deterministic_name is set).
+  string shard_id = 1;
+
+  // deterministic_name is used to enable deterministic routing. This implies
+  // that gauges and counters are routed based on name. If this is excluded,
+  // then they are routed to split load evenly.
+  string deterministic_name = 5;
+
+  // TODO: This can be removed once selector has been around long enough.
+  Selector legacy_selector = 2;
+
+  // selector is the preferred (over legacy_selector) mechanism to select
+  // what envelope types the subscription wants. If there are no selectors
+  // given, no data will be sent.
+  repeated Selector selectors = 4;
+
+  // TODO: This can be removed once the envelope.deprecated_tags is removed.
+  bool use_preferred_tags = 3;
+}
+
+// Selector instructs Loggregator to only send envelopes that match the given
+// criteria.
+message Selector {
+  string source_id = 1;
+
+  oneof Message {
+    LogSelector log = 2;
+    CounterSelector counter = 3;
+    GaugeSelector gauge = 4;
+    TimerSelector timer = 5;
+    EventSelector event = 6;
+  }
+}
+
+// LogSelector instructs Loggregator to egress Log envelopes to the given
+// subscription.
+message LogSelector {
+}
+
+// GaugeSelector instructs Loggregator to egress Gauge envelopes to the
+// given subscription.
+message GaugeSelector {
+  // Any egress Gauge envelope must consist of the given names.
+  repeated string names = 1;
+}
+
+// CounterSelector instructs Loggregator to egress Counter envelopes to the
+// given subscription
+message CounterSelector {
+  // Any egress Counter envelope must have the given name.
+  string name = 1;
+}
+
+// TimerSelector instructs Loggregator to egress Timer envelopes to the given
+// subscription.
+message TimerSelector {
+}
+
+// EventSelector instructs Loggregator to egress Event envelopes to the given
+// subscription.
+message EventSelector {
+}
